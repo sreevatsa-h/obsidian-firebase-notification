@@ -1,20 +1,27 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {ReminderViewParent, VIEW_TYPE_EXAMPLE} from 'view';
 
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
-	mySetting: string;
+	reminderDir: string;
+	reminderFile: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	reminderDir: '.reminders',
+	reminderFile: 'reminders.json'
 }
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
-
 	async onload() {
 		await this.loadSettings();
+
+		this.registerView(
+			VIEW_TYPE_EXAMPLE,
+			(leaf) => new ReminderViewParent(leaf, this.settings.reminderDir, this.settings.reminderFile)
+		);
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
@@ -34,6 +41,14 @@ export default class MyPlugin extends Plugin {
 			name: 'Open sample modal (simple)',
 			callback: () => {
 				new SampleModal(this.app).open();
+			}
+		});
+
+		this.addCommand({
+			id: 'open-reminder-modal',
+			name: 'Reminders Dashboard',
+			callback: () => {
+				this.activateView();
 			}
 		});
 		// This adds an editor command that can perform some operation on the current editor instance
@@ -78,6 +93,19 @@ export default class MyPlugin extends Plugin {
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
+	async activateView() {
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_EXAMPLE);
+
+		await this.app.workspace.getRightLeaf(false).setViewState({
+			type: VIEW_TYPE_EXAMPLE,
+			active: true,
+		});
+
+		this.app.workspace.revealLeaf(
+			this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE)[0]
+		);
+	}
+
 	onunload() {
 
 	}
@@ -120,17 +148,29 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', {text: 'Settings for reminder plugin.'});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Reminders directory')
+			.setDesc('Directory in which the secrets has to be stored')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setPlaceholder('Enter a path')
+				.setValue(this.plugin.settings.reminderDir)
 				.onChange(async (value) => {
 					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.reminderDir = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Reminders file')
+			.setDesc('File name for reminders')
+			.addText(text => text
+				.setPlaceholder('Enter a file name')
+				.setValue(this.plugin.settings.reminderFile)
+				.onChange(async (value) => {
+					console.log('Secret: ' + value);
+					this.plugin.settings.reminderFile = value;
 					await this.plugin.saveSettings();
 				}));
 	}
