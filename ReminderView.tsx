@@ -10,6 +10,7 @@ import {FileSystemAdapter, Notice, TAbstractFile, TFile, TFolder} from "obsidian
 import {useEffect, useState} from "react";
 import {List, ListItemText, ListItemAvatar, Avatar, ListItem, TextField, IconButton} from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
+// @ts-ignore
 import md5 from 'md5';
 
 interface Reminder {
@@ -131,6 +132,7 @@ export function ReminderView(props: ReminderViewProps) {
 					reminders.length > 0 ? <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
 						{
 							reminders.map((reminder, index) => {
+								// @ts-ignore
 								let reminderTime: Dayjs = dayjs(reminder.reminder_time);
 								return <ListItem secondaryAction={
 									<IconButton edge="end" aria-label="delete" onClick={() => deleteReminder(index)}>
